@@ -68,7 +68,7 @@ The log file (`logs/archive_log.json`) contains entries like:
 }
 ```
 
-## Technical Details
+## Technical Details:
 
 - Written in Python with minimal dependencies
 - Uses GitHub Actions for automation
