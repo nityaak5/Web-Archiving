@@ -1,0 +1,81 @@
+{
+  "archived_links": {
+    "https://huggingface.co/Salesforce/instructcodet5p-16b": {
+      "original_url": "https://huggingface.co/Salesforce/instructcodet5p-16b",
+      "timestamp": "2025-05-07T16:31:59.365671",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://huggingface.co/Salesforce/codegen-16B-nl": {
+      "original_url": "https://huggingface.co/Salesforce/codegen-16B-nl",
+      "timestamp": "2025-05-07T16:32:31.721708",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://pile.eleuther.ai/": {
+      "original_url": "https://pile.eleuther.ai/",
+      "timestamp": "2025-05-07T16:33:03.982777",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://www.salesforceairesearch.com/": {
+      "original_url": "https://www.salesforceairesearch.com/",
+      "timestamp": "2025-05-07T16:33:36.007910",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://huggingface.co/datasets/codeparrot/github-code": {
+      "original_url": "https://huggingface.co/datasets/codeparrot/github-code",
+      "timestamp": "2025-05-07T16:34:08.094257",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://aclanthology.org/2023.emnlp-main.68/": {
+      "original_url": "https://aclanthology.org/2023.emnlp-main.68/",
+      "timestamp": "2025-05-07T16:34:40.327911",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://cloud.google.com/bigquery/docs/datasets-intro": {
+      "original_url": "https://cloud.google.com/bigquery/docs/datasets-intro",
+      "timestamp": "2025-05-07T16:35:12.467251",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://github.com/salesforce/CodeT5/tree/main": {
+      "original_url": "https://github.com/salesforce/CodeT5/tree/main",
+      "timestamp": "2025-05-07T16:35:44.807989",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://arxiv.org/pdf/2305.07922": {
+      "original_url": "https://arxiv.org/pdf/2305.07922",
+      "timestamp": "2025-05-07T16:36:17.140072",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://huggingface.co/datasets/code-search-net/code_search_net": {
+      "original_url": "https://huggingface.co/datasets/code-search-net/code_search_net",
+      "timestamp": "2025-05-07T16:36:49.356209",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    },
+    "https://github.com/sahil280114/codealpaca": {
+      "original_url": "https://github.com/sahil280114/codealpaca",
+      "timestamp": "2025-05-07T16:37:21.391879",
+      "file": "./models/codet5.yaml",
+      "success": false,
+      "archived_url": null
+    }
+  }
+}
