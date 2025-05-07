@@ -12,8 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all history to detect file changes
       
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -23,23 +21,193 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml requests beautifulsoup4
+          pip install pyyaml requests
           
-      - name: Run archiving script
-        run: python scripts/archive_links.py
-      
-      - name: Check for changes
-        id: check_changes
+      - name: Run simple archiving script
         run: |
-          git diff --quiet logs/ || echo "changes=true" >> $GITHUB_OUTPUT
+          mkdir -p logs
+          
+          cat > archive_links.py << 'EOF'
+          #!/usr/bin/env python3
+          import os
+          import json
+          import yaml
+          import requests
+          import time
+          import re
+          from datetime import datetime
+          
+          # Constants
+          LOG_FILE = "logs/archive_log.json"
+          
+          def is_url(text):
+              """Check if a string is a valid URL."""
+              if not isinstance(text, str):
+                  return False
+              url_pattern = re.compile(
+                  r'^(https?:\/\/)?'  # http:// or https://
+                  r'([a-zA-Z0-9-]+\.)*'  # domain segments
+                  r'[a-zA-Z0-9-]+'  # domain name
+                  r'\.[a-zA-Z]{2,}'  # top-level domain
+                  r'(\/[^\s]*)?$'  # optional path
+              )
+              return bool(url_pattern.match(text))
+          
+          def extract_links_from_dict(data):
+              """Recursively extract all links from a dictionary."""
+              links = []
+              
+              if not isinstance(data, dict):
+                  return links
+                  
+              for key, value in data.items():
+                  if key == 'link' and value:
+                      if isinstance(value, str) and is_url(value):
+                          links.append(value)
+                      elif isinstance(value, list):
+                          for item in value:
+                              if isinstance(item, str) and is_url(item):
+                                  links.append(item)
+                  elif isinstance(value, dict):
+                      links.extend(extract_links_from_dict(value))
+                  elif isinstance(value, list):
+                      for item in value:
+                          if isinstance(item, dict):
+                              links.extend(extract_links_from_dict(item))
+                          elif isinstance(item, str) and is_url(item):
+                              links.append(item)
+              
+              return links
+          
+          def extract_links_from_yaml(yaml_file_path):
+              """Extract all links from a YAML file."""
+              with open(yaml_file_path, 'r', encoding='utf-8') as file:
+                  try:
+                      data = yaml.safe_load(file)
+                      if not data:
+                          return []
+                      
+                      links = extract_links_from_dict(data)
+                      return list(set(links))  # Return unique links only
+                  except yaml.YAMLError as e:
+                      print(f"Error parsing YAML file {yaml_file_path}: {e}")
+                      return []
+          
+          def get_all_yaml_files(directory='.'):
+              """Find all YAML files in the given directory and its subdirectories."""
+              yaml_files = []
+              
+              for root, _, files in os.walk(directory):
+                  for file in files:
+                      if file.endswith(('.yaml', '.yml')):
+                          # Skip files in .git and .github directories
+                          if '.git' not in root:
+                              yaml_files.append(os.path.join(root, file))
+              
+              return yaml_files
+          
+          def archive_url_wayback(url):
+              """Archive a URL using Internet Archive's Wayback Machine."""
+              print(f"Archiving {url} with Wayback Machine...")
+              
+              try:
+                  wayback_endpoint = f"https://web.archive.org/save/{url}"
+                  headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+                  
+                  response = requests.get(wayback_endpoint, headers=headers, timeout=30)
+                  
+                  if response.status_code == 200:
+                      # Extract the archived URL from the response
+                      archived_url = response.url
+                      if '/web/' in archived_url:
+                          return True, archived_url
+                      
+                      # Fallback
+                      return True, f"https://web.archive.org/web/*/{url}"
+                  else:
+                      print(f"  Failed with status code: {response.status_code}")
+                      return False, None
+                      
+              except Exception as e:
+                  print(f"  Error archiving with Wayback Machine: {e}")
+                  return False, None
+          
+          def load_existing_log():
+              """Load the existing archive log if it exists, otherwise return an empty dict."""
+              if os.path.exists(LOG_FILE):
+                  try:
+                      with open(LOG_FILE, 'r', encoding='utf-8') as f:
+                          return json.load(f)
+                  except json.JSONDecodeError:
+                      print(f"Error loading log file: {LOG_FILE}. Creating a new one.")
+              
+              return {"archived_links": {}}
+          
+          def save_log(log_data):
+              """Save the archive log to disk."""
+              with open(LOG_FILE, 'w', encoding='utf-8') as f:
+                  json.dump(log_data, f, indent=2)
+          
+          def main():
+              """Main function to extract and archive links from YAML files."""
+              # Create logs directory if it doesn't exist
+              os.makedirs("logs", exist_ok=True)
+              
+              # Load existing log
+              log_data = load_existing_log()
+              
+              # Get all YAML files
+              yaml_files = get_all_yaml_files()
+              print(f"Found {len(yaml_files)} YAML files")
+              
+              # Process each file
+              for yaml_file in yaml_files:
+                  print(f"Processing {yaml_file}")
+                  links = extract_links_from_yaml(yaml_file)
+                  print(f"  Found {len(links)} links")
+                  
+                  for link in links:
+                      print(f"  Processing link: {link}")
+                      
+                      # Skip if already archived successfully
+                      if link in log_data["archived_links"] and log_data["archived_links"][link].get("success", False):
+                          print(f"    Already archived, skipping")
+                          continue
+                      
+                      # Archive the link
+                      success, archived_url = archive_url_wayback(link)
+                      timestamp = datetime.utcnow().isoformat()
+                      
+                      # Create or update log entry
+                      log_data["archived_links"][link] = {
+                          "original_url": link,
+                          "timestamp": timestamp,
+                          "file": yaml_file,
+                          "success": success,
+                          "archived_url": archived_url if success else None
+                      }
+                      
+                      # Add a small delay to avoid rate limits
+                      time.sleep(2)
+                  
+              # Save the log
+              save_log(log_data)
+              print("Completed archiving links")
+          
+          if __name__ == "__main__":
+              main()
+          EOF
+          
+          # Make the script executable
+          chmod +x archive_links.py
+          
+          # Run the script
+          python archive_links.py
       
       - name: Commit archive logs
-        if: steps.check_changes.outputs.changes == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add logs/
-          git commit -m "Update archived links log [skip ci]"
+          git commit -m "Update archived links log [skip ci]" || echo "No changes to commit"
           git push
-
-
